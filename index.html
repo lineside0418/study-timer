@@ -24,6 +24,9 @@
             --progress-bg-light: rgba(0, 0, 0, 0.08);
             --font-family-en: 'Inter', sans-serif;
             --font-family-ja: 'Noto Sans JP', sans-serif;
+            /* 数字1つ分の高さをCSS変数で定義 */
+            --digit-height: 1.2em; /* .digit-containerのheightと同じ */
+            /* --bg-digit-height: 1.2em; これは使わないのでコメントアウト */
         }
 
         *, *::before, *::after {
@@ -68,6 +71,62 @@
             opacity: 0.7;
         }
 
+        /* --- 背景リール (これは先生のリクエスト外なので、コメントアウトしたままにしておくね) --- */
+        /* #background-timer-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(8rem, 30vw, 25rem);
+            font-weight: 700;
+            font-family: var(--font-family-en);
+            color: currentColor;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        body.light-mode #background-timer-display {
+            opacity: 0.02;
+        }
+
+        #background-timer-display .digit-container {
+            position: relative;
+            display: inline-block;
+            overflow: hidden;
+            height: var(--bg-digit-height);
+            line-height: var(--bg-digit-height);
+            width: 0.6em;
+            text-align: center;
+        }
+
+        #background-timer-display .digit-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            transition: transform 0.8s cubic-bezier(0.64, 0.04, 0.35, 1);
+        }
+
+        #background-timer-display .digit-strip > div {
+            height: var(--bg-digit-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #background-timer-display .colon {
+            display: inline-block;
+            margin: 0 0.1em;
+        } */
+
+
         /* --- レイアウト要素 --- */
         #clock {
             grid-area: clock;
@@ -88,9 +147,11 @@
             align-items: center;
             justify-content: center;
             gap: clamp(15px, 3vh, 20px);
+            position: relative;
+            z-index: 1;
         }
         
-        /* --- タイマー表示 --- */
+        /* --- タイマー表示 (メイン) --- */
         .timer-display-wrapper {
             position: relative;
             padding: 10px 30px;
@@ -98,6 +159,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            /* ここにマスクを適用！ */
+            /* グラデーションマスクを適用 */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+            /* リールが見切れるようにoverflowはvisibleのまま */
+            overflow: visible; /* リールがはみ出すのを許容 */
         }
 
         .timer-display-wrapper::before {
@@ -110,6 +177,7 @@
             background-color: var(--progress-bg-dark);
             border-radius: 10px;
             transition: background-color 0.3s;
+            z-index: -1; /* メインタイマーの数字より奥に */
         }
 
         body.light-mode .timer-display-wrapper::before {
@@ -124,46 +192,53 @@
             z-index: 1;
             display: flex;
             align-items: center;
+            /* 高さを明示的に設定（数字1つ分） */
+            height: var(--digit-height);
+            /* overflowをhiddenに戻す */
+            overflow: hidden; 
         }
-
-        /* 数字のスライドアニメーション */
-        .digit-container {
+        
+        /* メインリール内の数字コンテナとストリップ */
+        #timer-display .digit-container {
             position: relative;
             display: inline-block;
-            overflow: hidden;
-            height: 1.2em;
-            line-height: 1.2;
+            /* overflow: hidden; これを残す！ */
+            overflow: hidden; 
+            height: var(--digit-height); /* 数字1つ分の高さ */
+            line-height: var(--digit-height);
             width: 0.6em; /* 数字の幅を調整 */
             text-align: center; /* 数字を中央揃え */
         }
 
-        .digit {
+        #timer-display .digit-strip {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.64, 0.04, 0.35, 1); /* リールの動き */
+            /* ここで上下にパディングを追加して、上下の数字がはみ出すようにする */
+            padding-top: var(--digit-height); 
+            padding-bottom: var(--digit-height);
+            /* 初期位置を調整して、数字の中心が中央に来るように */
+            transform: translateY(calc(-1 * var(--digit-height))); /* 1つ上の数字が見えるように */
+            color: currentColor; /* 各数字の色を親から継承させる */
+        }
+
+        #timer-display .digit-strip > div {
+            height: var(--digit-height); /* 各数字の高さ */
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        .digit.slide-out {
-            transform: translateY(100%);
-        }
-
-        .digit.slide-in {
-            transform: translateY(-100%);
-        }
-
-        .digit.active {
-            transform: translateY(0);
-        }
-
-        .colon {
+        #timer-display .colon {
             display: inline-block;
             margin: 0 0.1em;
+            height: var(--digit-height);
+            line-height: var(--digit-height);
+            /* コロンも縦に並んだ数字と位置を合わせる */
+            position: relative;
+            top: 0; /* digit-stripのpadding-topを考慮 */
         }
 
         /* --- 操作ボタン --- */
@@ -295,7 +370,6 @@
     </style>
 </head>
 <body class="dark-mode">
-
     <div id="clock"></div>
 
     <div class="top-right-controls">
@@ -304,7 +378,7 @@
 
     <div class="timer-container">
         <div class="timer-display-wrapper">
-            <div id="timer-display">25:00</div>
+            <div id="timer-display"></div>
         </div>
         
         <div class="timer-controls">
@@ -345,7 +419,6 @@
             let initialDuration = totalSeconds; 
             let isTimerRunning = false;
             const originalTitle = document.title;
-            let previousDisplay = ''; // 数字のアニメーション用
             let wakeLock = null;
 
             // --- 通知関連 ---
@@ -355,16 +428,6 @@
                 setTimeout(() => {
                     notificationBanner.classList.remove('show');
                 }, duration);
-            };
-
-            // --- プッシュ通知の許可要求 ---
-            const requestNotificationPermission = async () => {
-                if ('Notification' in window) {
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                        showNotification('通知が有効になりました');
-                    }
-                }
             };
 
             // --- Wake Lock API (スリープ制御) ---
@@ -442,12 +505,7 @@
                     }
                     
                     initialDuration = totalSeconds;
-                    updateTimerDisplay();
-                    
-                    // 休憩モードの場合は色を変更
-                    if (currentMode === 'break') {
-                        timerDisplay.classList.add('resting');
-                    }
+                    // updateTimerDisplay() は createDigitStructure の後で呼ぶ
                 }
             };
 
@@ -461,55 +519,57 @@
             setInterval(updateClock, 1000);
             updateClock();
 
-            // --- 数字構造の作成 (数字アニメーション用) ---
-            const createDigitStructure = (displayString) => {
-                timerDisplay.innerHTML = '';
+            // --- 数字リール構造の作成 (汎用関数) ---
+            const createDigitStructure = (targetElement, initialDisplayString, digitHeightVar = '--digit-height') => {
+                targetElement.innerHTML = ''; // 既存の数字表示をクリア
+
+                // targetElementのfontSizeを正確に取得するために一時的なdivを使用
+                const tempDiv = document.createElement('div');
+                tempDiv.style.visibility = 'hidden';
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.fontSize = getComputedStyle(targetElement).fontSize;
+                document.body.appendChild(tempDiv);
+                const computedFontSize = parseFloat(getComputedStyle(tempDiv).fontSize);
+                document.body.removeChild(tempDiv);
                 
-                for (let i = 0; i < displayString.length; i++) {
-                    const char = displayString[i];
-                    
+                // digit-stripがpadding-top/bottomを持つので、
+                // digit-containerのheightはそのままdigit-heightに設定
+                const digitHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(digitHeightVar)) * computedFontSize;
+                
+                for (let i = 0; i < initialDisplayString.length; i++) {
+                    const char = initialDisplayString[i];
                     if (char === ':') {
                         const colon = document.createElement('span');
                         colon.className = 'colon';
                         colon.textContent = ':';
-                        timerDisplay.appendChild(colon);
+                        targetElement.appendChild(colon);
                     } else {
-                        const digitContainer = document.createElement('div');
-                        digitContainer.className = 'digit-container';
+                        const container = document.createElement('div');
+                        container.className = 'digit-container';
+
+                        const digitStrip = document.createElement('div');
+                        digitStrip.className = 'digit-strip';
+
+                        // 0から9までの数字をリールに追加
+                        for (let d = 0; d <= 9; d++) {
+                            const digitDiv = document.createElement('div');
+                            digitDiv.textContent = d;
+                            digitStrip.appendChild(digitDiv);
+                        }
                         
-                        const digit = document.createElement('div');
-                        digit.className = 'digit active';
-                        digit.textContent = char;
-                        
-                        digitContainer.appendChild(digit);
-                        timerDisplay.appendChild(digitContainer);
+                        container.appendChild(digitStrip);
+                        targetElement.appendChild(container);
+
+                        // 初期表示の数字にリールを合わせる
+                        const initialDigit = parseInt(char);
+                        if (!isNaN(initialDigit)) {
+                            // padding-topを考慮して初期位置を調整
+                            // CSSで`transform: translateY(calc(-1 * var(--digit-height)));`を設定済みなので、
+                            // ここでは`initialDigit`の分だけ上に移動させる
+                            digitStrip.style.transform = `translateY(calc(-1 * var(--digit-height) - ${initialDigit * digitHeight}px))`;
+                        }
                     }
                 }
-            };
-
-            // --- 数字のアニメーション (数字アニメーション用) ---
-            const animateDigit = (container, oldChar, newChar) => {
-                const oldDigit = container.querySelector('.digit.active');
-                if (!oldDigit) return;
-
-                const newDigit = document.createElement('div');
-                newDigit.className = 'digit slide-in';
-                newDigit.textContent = newChar;
-                
-                container.appendChild(newDigit);
-                
-                setTimeout(() => {
-                    oldDigit.classList.remove('active');
-                    oldDigit.classList.add('slide-out');
-                    newDigit.classList.remove('slide-in');
-                    newDigit.classList.add('active');
-                }, 10);
-                
-                setTimeout(() => {
-                    if (oldDigit.parentNode) {
-                        oldDigit.remove();
-                    }
-                }, 350);
             };
 
             // --- タイマー表示更新 ---
@@ -518,27 +578,19 @@
                 const seconds = totalSeconds % 60;
                 const displayString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-                if (previousDisplay === '') {
-                    // 初回表示時のみ、数字構造を生成
-                    createDigitStructure(displayString);
-                    previousDisplay = displayString;
-                } else if (previousDisplay !== displayString) {
-                    const digitContainers = timerDisplay.querySelectorAll('.digit-container');
-                    let digitIndex = 0;
-                    
-                    for (let i = 0; i < displayString.length; i++) {
-                        const char = displayString[i];
-                        
-                        if (char !== ':') {
-                            const oldChar = previousDisplay[i];
-                            if (oldChar !== char && digitContainers[digitIndex]) {
-                                animateDigit(digitContainers[digitIndex], oldChar, char);
-                            }
-                            digitIndex++;
-                        }
+                const mainDigitStrips = timerDisplay.querySelectorAll('.digit-strip');
+                const mainDigitHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--digit-height')) * parseFloat(getComputedStyle(timerDisplay).fontSize);
+                let mainStripIndex = 0;
+                for (let i = 0; i < displayString.length; i++) {
+                    const char = displayString[i];
+                    if (char === ':') continue;
+
+                    const newDigit = parseInt(char);
+                    if (!isNaN(newDigit) && mainDigitStrips[mainStripIndex]) {
+                        // padding-topを考慮して新しい数字の位置に移動
+                        mainDigitStrips[mainStripIndex].style.transform = `translateY(calc(-1 * var(--digit-height) - ${newDigit * mainDigitHeight}px))`;
                     }
-                    
-                    previousDisplay = displayString;
+                    mainStripIndex++;
                 }
 
                 document.title = `${displayString} - ${originalTitle}`;
@@ -554,9 +606,7 @@
 
                 startPauseBtn.innerHTML = '<i class="ri-pause-circle-line"></i>';
                 
-                // Wake Lock を取得
                 requestWakeLock();
-                
                 saveToStorage();
 
                 timerInterval = setInterval(() => {
@@ -564,7 +614,6 @@
                     updateTimerDisplay();
                     saveToStorage();
 
-                    // カウントダウン音（残り4,3,2,1秒）
                     if (totalSeconds <= 4 && totalSeconds >= 1) {
                         playBeep(1000, 150);
                     }
@@ -574,18 +623,9 @@
                         isTimerRunning = false;
                         releaseWakeLock();
                         
-                        // 0秒の音
-                        
-                        // 次のモードへ移行時の長い音
                         setTimeout(() => {
                             playBeep(600, 800);
                         }, 200);
-                        
-                        // プッシュ通知
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            const message = currentMode === 'study' ? '集中時間終了！休憩時間です' : '休憩時間終了！集中時間です';
-                            new Notification('Focus Timer', { body: message });
-                        }
                         
                         switchMode();
                     }
@@ -605,8 +645,10 @@
                 currentMode = 'study';
                 totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
                 initialDuration = totalSeconds;
-                previousDisplay = ''; // アニメーションのためリセット
-                updateTimerDisplay();
+                const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
+                
+                createDigitStructure(timerDisplay, displayString, '--digit-height');
+                updateTimerDisplay(); // 初期表示を更新
                 timerDisplay.classList.remove('resting');
                 saveToStorage();
             };
@@ -618,11 +660,11 @@
                 ) * 60 || 0;
 
                 initialDuration = totalSeconds;
-                previousDisplay = ''; // アニメーションのためリセット
-                createDigitStructure('00:00'); // モード切替時に00:00から表示を始める
-                updateTimerDisplay();
+                const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
+                
+                createDigitStructure(timerDisplay, displayString, '--digit-height');
+                updateTimerDisplay(); // 初期表示を更新
 
-                // タイマー色の切り替え
                 if (currentMode === 'break') {
                     timerDisplay.classList.add('resting');
                 } else {
@@ -635,9 +677,6 @@
 
             // --- イベントリスナー ---
             startPauseBtn.addEventListener('click', () => {
-                if (!isTimerRunning) {
-                    requestNotificationPermission();
-                }
                 isTimerRunning ? pauseTimer() : startTimer();
             });
 
@@ -647,7 +686,9 @@
                 if (!isTimerRunning && currentMode === 'study') {
                     totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
                     initialDuration = totalSeconds;
-                    previousDisplay = ''; // アニメーションのためリセット
+                    const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
+                    
+                    createDigitStructure(timerDisplay, displayString, '--digit-height');
                     updateTimerDisplay();
                 }
                 saveToStorage();
@@ -657,7 +698,9 @@
                 if (!isTimerRunning && currentMode === 'break') {
                     totalSeconds = parseInt(breakTimeInput.value) * 60 || 0;
                     initialDuration = totalSeconds;
-                    previousDisplay = ''; // アニメーションのためリセット
+                    const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
+                    
+                    createDigitStructure(timerDisplay, displayString, '--digit-height');
                     updateTimerDisplay();
                 }
                 saveToStorage();
@@ -670,14 +713,12 @@
                 saveToStorage();
             });
 
-            // --- ページの可視性変更時の処理 ---
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && isTimerRunning) {
                     showNotification('タイマーがバックグラウンドで実行中です', 5000);
                 }
             });
 
-            // --- ページ離脱時の保存 ---
             window.addEventListener('beforeunload', () => {
                 saveToStorage();
                 releaseWakeLock();
@@ -685,6 +726,8 @@
 
             // --- 初期化 ---
             loadFromStorage();
+            const initialDisplayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
+            createDigitStructure(timerDisplay, initialDisplayString, '--digit-height');
             updateTimerDisplay();
         });
     </script>
