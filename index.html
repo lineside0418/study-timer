@@ -27,10 +27,10 @@
 
         body {
             margin: 0;
-            padding: 24px;
-            height: 100vh;
+            padding: 16px;
+            min-height: 100vh;
             width: 100vw;
-            overflow: hidden;
+            overflow-x: hidden;
             font-family: var(--font-family-ja);
             color: var(--text-color-dark);
             background-color: var(--bg-color-dark);
@@ -67,7 +67,7 @@
         #clock {
             grid-area: clock;
             font-family: var(--font-family-en);
-            font-size: 1.75rem;
+            font-size: clamp(1.2rem, 3vw, 1.75rem);
             font-weight: 500;
         }
 
@@ -82,14 +82,17 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: clamp(15px, 3vh, 20px);
         }
         
-        /* --- タイマー表示とアニメーション --- */
+        /* --- タイマー表示 --- */
         .timer-display-wrapper {
             position: relative;
             padding: 10px 30px;
             border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .timer-display-wrapper::before {
@@ -101,7 +104,7 @@
             width: 100%;
             background-color: var(--progress-bg-dark);
             border-radius: 10px;
-            transition: width 1s linear, background-color 0.3s;
+            transition: background-color 0.3s;
         }
 
         body.light-mode .timer-display-wrapper::before {
@@ -109,7 +112,7 @@
         }
 
         #timer-display {
-            font-size: 10rem;
+            font-size: clamp(4rem, 15vw, 10rem);
             font-weight: 700;
             font-family: var(--font-family-en);
             position: relative;
@@ -125,7 +128,8 @@
             overflow: hidden;
             height: 1.2em;
             line-height: 1.2;
-            width: 0.6em;
+            width: 0.6em; /* 数字の幅を調整 */
+            text-align: center; /* 数字を中央揃え */
         }
 
         .digit {
@@ -163,7 +167,7 @@
             gap: 20px;
         }
         .timer-controls button {
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 7vw, 2.5rem);
         }
         
         /* --- 時間設定 --- */
@@ -172,7 +176,9 @@
             align-items: center;
             gap: 15px;
             margin-top: 10px;
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .time-settings label {
             font-weight: 500;
@@ -180,7 +186,7 @@
         .time-settings input {
             width: 70px;
             padding: 8px;
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
             text-align: center;
             background-color: transparent;
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -190,36 +196,97 @@
         }
 
         #timer-display.resting {
-        color: #3cb371;
+            color: #3cb371;
         }
 
-        
         body.light-mode .time-settings input {
             border-color: rgba(0, 0, 0, 0.2);
         }
 
         /* --- 右上：モード切替 --- */
         #mode-toggle {
-            font-size: 1.75rem;
+            font-size: clamp(1.5rem, 4vw, 1.75rem);
         }
 
-        /* モードチェンジ時のフェード+スケールアニメーション */
-        .mode-transition {
-        animation: fadeScale 0.4s ease;
-        }
-
-        @keyframes fadeScale {
-        0% {
+        /* 通知バナー */
+        .notification-banner {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
             opacity: 0;
-            transform: scale(0.95);
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
         }
-        100% {
+
+        .notification-banner.show {
             opacity: 1;
-            transform: scale(1);
-        }
+            transform: translateX(0);
         }
 
+        body.light-mode .notification-banner {
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+        }
 
+        /* --- レスポンシブ対応 --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+                grid-template-rows: auto 1fr;
+                grid-template-areas:
+                    "clock clock top-right"
+                    "center center center";
+            }
+
+            .timer-display-wrapper {
+                padding: 8px 20px;
+            }
+
+            .time-settings {
+                gap: 10px;
+            }
+
+            .time-settings input {
+                width: 60px;
+                padding: 6px;
+            }
+
+            .notification-banner {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                right: 10px;
+            }
+        }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+            body {
+                padding: 8px;
+                grid-template-rows: auto 1fr;
+                grid-template-areas:
+                    "clock center top-right"
+                    ". center .";
+            }
+
+            .timer-container {
+                gap: 10px;
+            }
+
+            .timer-display-wrapper {
+                padding: 5px 15px;
+            }
+
+            .time-settings {
+                margin-top: 5px;
+            }
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -250,6 +317,8 @@
         </div>
     </div>
 
+    <div class="notification-banner" id="notification-banner"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const getEl = (id) => document.getElementById(id);
@@ -262,16 +331,120 @@
             const resetBtn = getEl('reset');
             const studyTimeInput = getEl('study-time-input');
             const breakTimeInput = getEl('break-time-input');
-            const progressBar = document.querySelector('.timer-display-wrapper');
+            const notificationBanner = getEl('notification-banner');
 
             // --- 状態変数 ---
             let timerInterval;
             let currentMode = 'study';
             let totalSeconds = parseInt(studyTimeInput.value) * 60;
-            let initialDuration = totalSeconds;
+            let initialDuration = totalSeconds; 
             let isTimerRunning = false;
             const originalTitle = document.title;
-            let previousDisplay = '';
+            let previousDisplay = ''; // 数字のアニメーション用
+            let wakeLock = null;
+
+            // --- 通知関連 ---
+            const showNotification = (message, duration = 3000) => {
+                notificationBanner.textContent = message;
+                notificationBanner.classList.add('show');
+                setTimeout(() => {
+                    notificationBanner.classList.remove('show');
+                }, duration);
+            };
+
+            // --- プッシュ通知の許可要求 ---
+            const requestNotificationPermission = async () => {
+                if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        showNotification('通知が有効になりました');
+                    }
+                }
+            };
+
+            // --- Wake Lock API (スリープ制御) ---
+            const requestWakeLock = async () => {
+                try {
+                    if ('wakeLock' in navigator) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        showNotification('画面スリープを無効にしました');
+                        
+                        wakeLock.addEventListener('release', () => {
+                            console.log('Wake Lock released');
+                        });
+                    } else {
+                        showNotification('このブラウザではスリープ制御に対応していません');
+                    }
+                } catch (err) {
+                    console.error('Wake Lock failed:', err);
+                }
+            };
+
+            const releaseWakeLock = () => {
+                if (wakeLock) {
+                    wakeLock.release();
+                    wakeLock = null;
+                    showNotification('画面スリープを有効にしました');
+                }
+            };
+
+            // --- 音声生成関数 ---
+            const playBeep = (frequency = 800, duration = 200) => {
+                if (!window.AudioContext && !window.webkitAudioContext) return;
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            };
+
+            // --- localStorage関数 ---
+            const saveToStorage = () => {
+                const data = {
+                    studyTime: parseInt(studyTimeInput.value),
+                    breakTime: parseInt(breakTimeInput.value),
+                    currentMode: currentMode,
+                    totalSeconds: totalSeconds,
+                    isTimerRunning: isTimerRunning,
+                    lightMode: document.body.classList.contains('light-mode')
+                };
+                localStorage.setItem('focusTimer', JSON.stringify(data));
+            };
+
+            const loadFromStorage = () => {
+                const saved = localStorage.getItem('focusTimer');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    studyTimeInput.value = data.studyTime || 25;
+                    breakTimeInput.value = data.breakTime || 5;
+                    currentMode = data.currentMode || 'study';
+                    totalSeconds = data.totalSeconds || (parseInt(studyTimeInput.value) * 60);
+                    
+                    if (data.lightMode) {
+                        document.body.classList.add('light-mode');
+                        modeToggleBtn.innerHTML = '<i class="ri-moon-line"></i>';
+                    }
+                    
+                    initialDuration = totalSeconds;
+                    updateTimerDisplay();
+                    
+                    // 休憩モードの場合は色を変更
+                    if (currentMode === 'break') {
+                        timerDisplay.classList.add('resting');
+                    }
+                }
+            };
 
             // --- 時計 ---
             const updateClock = () => {
@@ -283,7 +456,7 @@
             setInterval(updateClock, 1000);
             updateClock();
 
-            // --- 数字構造の作成 ---
+            // --- 数字構造の作成 (数字アニメーション用) ---
             const createDigitStructure = (displayString) => {
                 timerDisplay.innerHTML = '';
                 
@@ -309,7 +482,7 @@
                 }
             };
 
-            // --- 数字のアニメーション ---
+            // --- 数字のアニメーション (数字アニメーション用) ---
             const animateDigit = (container, oldChar, newChar) => {
                 const oldDigit = container.querySelector('.digit.active');
                 if (!oldDigit) return;
@@ -320,18 +493,13 @@
                 
                 container.appendChild(newDigit);
                 
-                // アニメーション開始（少し遅延を入れて確実に適用）
                 setTimeout(() => {
-                    // 古い数字を下にスライドアウト
                     oldDigit.classList.remove('active');
                     oldDigit.classList.add('slide-out');
-                    
-                    // 新しい数字を中央にスライドイン
                     newDigit.classList.remove('slide-in');
                     newDigit.classList.add('active');
                 }, 10);
                 
-                // 古い数字を削除
                 setTimeout(() => {
                     if (oldDigit.parentNode) {
                         oldDigit.remove();
@@ -345,12 +513,11 @@
                 const seconds = totalSeconds % 60;
                 const displayString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-                // 初回表示の場合
                 if (previousDisplay === '') {
+                    // 初回表示時のみ、数字構造を生成
                     createDigitStructure(displayString);
                     previousDisplay = displayString;
                 } else if (previousDisplay !== displayString) {
-                    // 変更があった場合のみアニメーション
                     const digitContainers = timerDisplay.querySelectorAll('.digit-container');
                     let digitIndex = 0;
                     
@@ -381,25 +548,51 @@
                 ) * 60 || 0;
 
                 startPauseBtn.innerHTML = '<i class="ri-pause-circle-line"></i>';
+                
+                // Wake Lock を取得
+                requestWakeLock();
+                
+                saveToStorage();
 
                 timerInterval = setInterval(() => {
                     totalSeconds--;
                     updateTimerDisplay();
+                    saveToStorage();
 
-                    if (totalSeconds < 0) {
+                    // カウントダウン音（残り4,3,2,1秒）
+                    if (totalSeconds <= 4 && totalSeconds >= 1) {
+                        playBeep(1000, 150);
+                    }
+
+                    if (totalSeconds <= 0) {
                         clearInterval(timerInterval);
                         isTimerRunning = false;
-                        new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_593d059032.mp3').play();
-                        switchMode(); // 自動で次モードに移行
+                        releaseWakeLock();
+                        
+                        // 0秒の音
+                        
+                        // 次のモードへ移行時の長い音
+                        setTimeout(() => {
+                            playBeep(600, 800);
+                        }, 200);
+                        
+                        // プッシュ通知
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            const message = currentMode === 'study' ? '集中時間終了！休憩時間です' : '休憩時間終了！集中時間です';
+                            new Notification('Focus Timer', { body: message });
+                        }
+                        
+                        switchMode();
                     }
                 }, 1000);
             };
 
-            
             const pauseTimer = () => {
                 clearInterval(timerInterval);
                 isTimerRunning = false;
                 startPauseBtn.innerHTML = '<i class="ri-play-circle-line"></i>';
+                releaseWakeLock();
+                saveToStorage();
             };
             
             const resetTimer = () => {
@@ -407,8 +600,10 @@
                 currentMode = 'study';
                 totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
                 initialDuration = totalSeconds;
-                previousDisplay = '';
+                previousDisplay = ''; // アニメーションのためリセット
                 updateTimerDisplay();
+                timerDisplay.classList.remove('resting');
+                saveToStorage();
             };
 
             const switchMode = () => {
@@ -418,15 +613,9 @@
                 ) * 60 || 0;
 
                 initialDuration = totalSeconds;
-                previousDisplay = ''; // 重複防止のためリセット
-                createDigitStructure('00:00'); // 古い構造をクリアして再描画
+                previousDisplay = ''; // アニメーションのためリセット
+                createDigitStructure('00:00'); // モード切替時に00:00から表示を始める
                 updateTimerDisplay();
-
-                // 🌟 アニメーション追加ここ
-                timerDisplay.classList.add('mode-transition');
-                setTimeout(() => {
-                    timerDisplay.classList.remove('mode-transition');
-                }, 400);
 
                 // タイマー色の切り替え
                 if (currentMode === 'break') {
@@ -435,13 +624,15 @@
                     timerDisplay.classList.remove('resting');
                 }
 
-                // 次のモードのカウントダウンを開始
+                saveToStorage();
                 startTimer();
             };
 
-
             // --- イベントリスナー ---
             startPauseBtn.addEventListener('click', () => {
+                if (!isTimerRunning) {
+                    requestNotificationPermission();
+                }
                 isTimerRunning ? pauseTimer() : startTimer();
             });
 
@@ -451,27 +642,44 @@
                 if (!isTimerRunning && currentMode === 'study') {
                     totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
                     initialDuration = totalSeconds;
-                    previousDisplay = '';
+                    previousDisplay = ''; // アニメーションのためリセット
                     updateTimerDisplay();
                 }
+                saveToStorage();
             });
 
             breakTimeInput.addEventListener('input', () => {
-                 if (!isTimerRunning && currentMode === 'break') {
+                if (!isTimerRunning && currentMode === 'break') {
                     totalSeconds = parseInt(breakTimeInput.value) * 60 || 0;
                     initialDuration = totalSeconds;
-                    previousDisplay = '';
+                    previousDisplay = ''; // アニメーションのためリセット
                     updateTimerDisplay();
                 }
+                saveToStorage();
             });
 
             modeToggleBtn.addEventListener('click', () => {
                 document.body.classList.toggle('light-mode');
                 const isLight = document.body.classList.contains('light-mode');
                 modeToggleBtn.innerHTML = isLight ? '<i class="ri-moon-line"></i>' : '<i class="ri-sun-line"></i>';
+                saveToStorage();
             });
-            
+
+            // --- ページの可視性変更時の処理 ---
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && isTimerRunning) {
+                    showNotification('タイマーがバックグラウンドで実行中です', 5000);
+                }
+            });
+
+            // --- ページ離脱時の保存 ---
+            window.addEventListener('beforeunload', () => {
+                saveToStorage();
+                releaseWakeLock();
+            });
+
             // --- 初期化 ---
+            loadFromStorage();
             updateTimerDisplay();
         });
     </script>
