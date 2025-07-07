@@ -382,9 +382,18 @@
             #clock {
                 font-size: clamp(1.2rem, 4vw, 1.8rem); /* スマホでの時計サイズ */
             }
-            /* ★ここを追加・変更したよ！ */
+            .timer-container {
+                padding-top: 30px; /* 上下の余白を少し増やす */
+                padding-bottom: 30px; /* 上下の余白を少し増やす */
+                padding-left: 15px; /* 左右の余白を確保 */
+                padding-right: 15px; /* 左右の余白を確保 */
+            }
             #timer-display {
-                font-size: clamp(5rem, 15vw, 8rem); /* スマホでのタイマーサイズを大きく */
+                font-size: clamp(4rem, 12vw, 7rem); /* スマホでのタイマーサイズを調整 */
+            }
+            .timer-display-wrapper {
+                padding-left: 10px; /* タイマーの左右のパディングを調整 */
+                padding-right: 10px; /* タイマーの左右のパディングを調整 */
             }
             #mode-toggle, #total-study-time-toggle, #rain-sound-toggle {
                 font-size: clamp(1.5rem, 5vw, 2rem); /* スマホでのアイコンサイズ */
@@ -404,7 +413,7 @@
                 font-size: clamp(0.9rem, 2.5vw, 1.1rem); /* スマホでの設定文字サイズ */
             }
             .time-settings input {
-                width: clamp(60px, 18vw, 80px); /* スマホでの入力欄の幅を調整 */
+                width: clamp(55px, 16vw, 75px); /* スマホでの入力欄の幅を調整 */
             }
         }
 
