@@ -410,10 +410,25 @@
                 font-size: clamp(2rem, 8vw, 2.8rem); /* スマホでのボタンサイズも大きく */
             }
             .time-settings {
+                flex-direction: column; /* 項目を縦に並べる */
+                align-items: center; /* ★ここを修正したよ！子要素を中央に揃える */
+                gap: 15px; /* 上下のアイテム間のギャップを調整 */
                 font-size: clamp(0.9rem, 2.5vw, 1.1rem); /* スマホでの設定文字サイズ */
+            }
+            .time-settings div { /* 各設定（集中、休憩）をまとめるための新しいラッパー */
+                display: flex;
+                align-items: center;
+                gap: clamp(8px, 2vw, 15px);
+                width: 100%; /* 幅を親要素に合わせる */
+                justify-content: center; /* 中の要素を中央寄せ */
             }
             .time-settings input {
                 width: clamp(55px, 16vw, 75px); /* スマホでの入力欄の幅を調整 */
+                flex-shrink: 0; /* 縮まないようにする */
+            }
+            .time-settings label {
+                min-width: 50px; /* ラベルの最小幅を設定して揃える */
+                /* text-align: right; */ /* ★ここを削除したよ！中央配置なので不要 */
             }
         }
 
@@ -438,6 +453,21 @@
             .time-settings {
                 margin-top: clamp(2px, 1vh, 5px);
                 gap: clamp(5px, 1.5vw, 10px);
+                flex-direction: row; /* 横長画面では横並びに戻す */
+                align-items: center;
+                justify-content: center;
+            }
+            .time-settings div {
+                 /* 横長画面での調整をリセット */
+                flex-direction: row;
+                align-items: center;
+                gap: clamp(8px, 2vw, 15px);
+                width: auto;
+                justify-content: center;
+            }
+            .time-settings label {
+                min-width: auto; /* 横長画面では最小幅をリセット */
+                text-align: left; /* 横長画面では左寄せに戻す */
             }
             .timer-controls button {
                 font-size: clamp(1.3rem, 4vw, 1.8rem);
@@ -473,12 +503,16 @@
         </div>
 
         <div class="time-settings">
-            <label for="study-time-input">集中</label>
-            <input type="number" id="study-time-input" value="25" min="1">
-            <span>分</span>
-            <label for="break-time-input" style="margin-left: 10px;">休憩</label>
-            <input type="number" id="break-time-input" value="5" min="1">
-            <span>分</span>
+            <div>
+                <label for="study-time-input">集中</label>
+                <input type="number" id="study-time-input" value="25" min="1">
+                <span>分</span>
+            </div>
+            <div>
+                <label for="break-time-input">休憩</label>
+                <input type="number" id="break-time-input" value="5" min="1">
+                <span>分</span>
+            </div>
         </div>
     </div>
 
@@ -925,4 +959,4 @@
         });
     </script>
 </body>
-</html>
+</html> 
