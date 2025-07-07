@@ -382,6 +382,10 @@
             #clock {
                 font-size: clamp(1.2rem, 4vw, 1.8rem); /* スマホでの時計サイズ */
             }
+            /* ★ここを追加・変更したよ！ */
+            #timer-display {
+                font-size: clamp(5rem, 15vw, 8rem); /* スマホでのタイマーサイズを大きく */
+            }
             #mode-toggle, #total-study-time-toggle, #rain-sound-toggle {
                 font-size: clamp(1.5rem, 5vw, 2rem); /* スマホでのアイコンサイズ */
             }
@@ -392,6 +396,15 @@
             .raindrop { /* スマホでは雨粒を細かくする */
                 width: 0.8px;
                 height: 8px;
+            }
+            .timer-controls button {
+                font-size: clamp(2rem, 8vw, 2.8rem); /* スマホでのボタンサイズも大きく */
+            }
+            .time-settings {
+                font-size: clamp(0.9rem, 2.5vw, 1.1rem); /* スマホでの設定文字サイズ */
+            }
+            .time-settings input {
+                width: clamp(60px, 18vw, 80px); /* スマホでの入力欄の幅を調整 */
             }
         }
 
@@ -719,7 +732,7 @@
                     if (totalSeconds <= 4 && totalSeconds >= 1) playBeep(1000, 150);
                     if (totalSeconds <= 0) {
                         clearInterval(timerInterval);
-                        isTimerRunning = false; // ★ ここにisTimerRunningをfalseにする行を追加！
+                        isTimerRunning = false; 
                         setTimeout(() => playBeep(600, 800), 200);
                         switchMode();
                     }
@@ -777,7 +790,7 @@
             };
 
             // --- 雨アニメーション関連 ---
-            const MAX_RAINDROPS = 100; // ★同時に表示する雨粒の最大数（調整可能）
+            const MAX_RAINDROPS = 100; 
 
             const createRaindrop = () => {
                 const drop = document.createElement('div');
@@ -785,12 +798,11 @@
                 // 画面の横幅全体からランダムな位置に配置
                 drop.style.left = `${Math.random() * 100}vw`;
                 // ランダムなアニメーションの速さ
-                drop.style.animationDuration = `${Math.random() * 0.8 + 0.7}s`; // 0.7sから1.5s
+                drop.style.animationDuration = `${Math.random() * 0.8 + 0.7}s`; 
                 // ランダムなアニメーションの遅延
-                drop.style.animationDelay = `${Math.random() * 5}s`; // 0sから5sの遅延
+                drop.style.animationDelay = `${Math.random() * 5}s`; 
                 rainContainer.appendChild(drop);
 
-                // ★ 最大数を超えたら、一番古い雨粒を削除
                 if (rainContainer.children.length > MAX_RAINDROPS) {
                     rainContainer.removeChild(rainContainer.children[0]);
                 }
@@ -799,12 +811,10 @@
             let rainAnimationInterval;
             const startRainAnimation = () => {
                 if (!rainAnimationInterval) {
-                    // 最初にある程度の雨粒を生成 (MAX_RAINDROPSの半数程度を初期生成)
                     for (let i = 0; i < MAX_RAINDROPS / 2; i++) { 
                         createRaindrop();
                     }
-                    // その後、定期的に新しい雨粒を生成
-                    rainAnimationInterval = setInterval(createRaindrop, 100); // 100msごとに1つ生成
+                    rainAnimationInterval = setInterval(createRaindrop, 100); 
                     rainContainer.classList.add('show');
                 }
             };
@@ -813,7 +823,6 @@
                 clearInterval(rainAnimationInterval);
                 rainAnimationInterval = null;
                 rainContainer.classList.remove('show');
-                // 既存の雨粒を全て削除
                 rainContainer.innerHTML = '';
             };
 
@@ -824,18 +833,18 @@
                     rainAudio.pause();
                     isRainSoundPlaying = false;
                     rainSoundToggleBtn.innerHTML = '<i class="ri-contrast-drop-line"></i>';
-                    stopRainAnimation(); // アニメーション停止
+                    stopRainAnimation(); 
                     showNotification('雨の音をオフにしたよ！', 2000);
                 } else {
                     rainAudio.play().catch(e => {
                         console.error("雨の音を再生できなかったよ: ", e);
                         showNotification('ごめんね、雨の音を再生できなかったよ…', 3000);
-                        isRainSoundPlaying = false; // 再生失敗時は状態を戻す
-                        return; // 失敗時はアニメーションも開始しない
+                        isRainSoundPlaying = false; 
+                        return; 
                     });
                     isRainSoundPlaying = true;
                     rainSoundToggleBtn.innerHTML = '<i class="ri-contrast-drop-fill"></i>';
-                    startRainAnimation(); // アニメーション開始
+                    startRainAnimation(); 
                     showNotification('雨の音をオンにしたよ！', 2000);
                 }
                 saveToStorage();
