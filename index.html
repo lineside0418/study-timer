@@ -20,13 +20,12 @@
             --text-color-light: #000000;
             --bg-color-dark: #000000;
             --bg-color-light: #ffffff;
-            --progress-bg-dark: rgba(255, 255, 255, 0.1);
-            --progress-bg-light: rgba(0, 0, 0, 0.08);
+            --progress-bg-dark: rgba(255, 255, 255, 0.12);
+            --progress-bg-light: rgba(0, 0, 0, 0.06);
             --font-family-en: 'Inter', sans-serif;
             --font-family-ja: 'Noto Sans JP', sans-serif;
-            /* 数字1つ分の高さをCSS変数で定義 */
-            --digit-height: 1.2em; /* .digit-containerのheightと同じ */
-            /* --bg-digit-height: 1.2em; これは使わないのでコメントアウト */
+            --digit-height: 1.2em;
+            --padding-base: 20px; /* 基本の余白を調整 */
         }
 
         *, *::before, *::after {
@@ -35,22 +34,23 @@
 
         body {
             margin: 0;
-            padding: 16px;
+            padding: var(--padding-base); /* 基本の余白を適用 */
             min-height: 100vh;
             width: 100vw;
-            overflow-x: hidden;
+            overflow: hidden;
             font-family: var(--font-family-ja);
             color: var(--text-color-dark);
             background-color: var(--bg-color-dark);
             transition: background-color 0.3s, color 0.3s;
             display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            grid-template-columns: auto 1fr auto;
             grid-template-rows: auto 1fr auto;
             grid-template-areas:
-                "clock . top-right"
+                "top-left . top-right"
                 ". center ."
-                ". . .";
-            align-items: center;
+                "bottom-left . bottom-right"; /* bottom-rightを追加 */
+            align-items: center; /* 縦方向中央揃え */
+            justify-content: center; /* 横方向中央揃え */
         }
 
         body.light-mode {
@@ -66,78 +66,23 @@
             font-family: inherit;
             transition: opacity 0.2s;
         }
-        
+
         button:hover {
             opacity: 0.7;
         }
 
-        /* --- 背景リール (これは先生のリクエスト外なので、コメントアウトしたままにしておくね) --- */
-        /* #background-timer-display {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(8rem, 30vw, 25rem);
-            font-weight: 700;
-            font-family: var(--font-family-en);
-            color: currentColor;
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        body.light-mode #background-timer-display {
-            opacity: 0.02;
-        }
-
-        #background-timer-display .digit-container {
-            position: relative;
-            display: inline-block;
-            overflow: hidden;
-            height: var(--bg-digit-height);
-            line-height: var(--bg-digit-height);
-            width: 0.6em;
-            text-align: center;
-        }
-
-        #background-timer-display .digit-strip {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            transition: transform 0.8s cubic-bezier(0.64, 0.04, 0.35, 1);
-        }
-
-        #background-timer-display .digit-strip > div {
-            height: var(--bg-digit-height);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #background-timer-display .colon {
-            display: inline-block;
-            margin: 0 0.1em;
-        } */
-
-
         /* --- レイアウト要素 --- */
         #clock {
-            grid-area: clock;
+            grid-area: top-left;
             font-family: var(--font-family-en);
-            font-size: clamp(1.2rem, 3vw, 1.75rem);
+            font-size: clamp(1rem, 3vw, 1.5rem);
             font-weight: 500;
+            justify-self: start; /* 左寄せ */
         }
 
         .top-right-controls {
             grid-area: top-right;
-            justify-self: end;
+            justify-self: end; /* 右寄せ */
         }
 
         .timer-container {
@@ -146,25 +91,80 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: clamp(15px, 3vh, 20px);
+            gap: clamp(10px, 2vh, 15px);
             position: relative;
             z-index: 1;
+            transition: gap 0.4s ease;
+            max-width: 100%;
+            max-height: 100%;
         }
-        
+
+        .bottom-left-controls {
+            grid-area: bottom-left;
+            justify-self: start; /* 左寄せ */
+            align-self: end; /* 下寄せ */
+        }
+
+        /* --- 新しい右下エリア --- */
+        .bottom-right-controls {
+            grid-area: bottom-right;
+            justify-self: end; /* 右寄せ */
+            align-self: end; /* 下寄せ */
+            display: flex;
+            align-items: center; /* 縦方向中央揃え */
+            justify-content: flex-end; /* 右寄せ */
+            gap: 10px; /* アイコンと表示の間のスペース */
+            position: relative; /* 相対配置の基準点 */
+            /* padding-right: var(--padding-base); */ /* 画面端からの余白 */
+        }
+
+        #total-study-time-toggle {
+            font-size: clamp(1.3rem, 4vw, 1.8rem); /* 他のアイコンと同じサイズ */
+            padding: 5px;
+            border-radius: 50%;
+            z-index: 2; /* 表示要素より手前にする */
+        }
+
+        #total-study-time-display {
+            position: absolute;
+            right: calc(100% + 10px); /* アイコンの左側に10pxのギャップを持たせる */
+            background-color: var(--progress-bg-dark);
+            color: var(--text-color-dark);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            font-family: var(--font-family-en);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 0; /* 初期幅0 */
+            opacity: 0; /* 初期透明度0 */
+            transition: max-width 0.3s ease-out, opacity 0.3s ease-out; /* 幅と透明度のアニメーション */
+            transform-origin: right center; /* 右端を基準に伸縮 */
+            text-align: right; /* テキストを右揃え */
+        }
+
+        #total-study-time-display.show {
+            max-width: 200px; /* 表示時の最大幅（調整可能） */
+            opacity: 1;
+        }
+
+        body.light-mode #total-study-time-display {
+            background-color: var(--progress-bg-light);
+            color: var(--text-color-light);
+        }
+
         /* --- タイマー表示 (メイン) --- */
         .timer-display-wrapper {
             position: relative;
-            padding: 10px 30px;
+            padding: clamp(5px, 2vw, 10px) clamp(15px, 5vw, 30px);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* ここにマスクを適用！ */
-            /* グラデーションマスクを適用 */
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-            /* リールが見切れるようにoverflowはvisibleのまま */
-            overflow: visible; /* リールがはみ出すのを許容 */
+            overflow: visible;
         }
 
         .timer-display-wrapper::before {
@@ -177,7 +177,7 @@
             background-color: var(--progress-bg-dark);
             border-radius: 10px;
             transition: background-color 0.3s;
-            z-index: -1; /* メインタイマーの数字より奥に */
+            z-index: -1;
         }
 
         body.light-mode .timer-display-wrapper::before {
@@ -185,29 +185,25 @@
         }
 
         #timer-display {
-            font-size: clamp(4rem, 15vw, 10rem);
+            font-size: clamp(3rem, 10vw, 7rem);
             font-weight: 700;
             font-family: var(--font-family-en);
             position: relative;
             z-index: 1;
             display: flex;
             align-items: center;
-            /* 高さを明示的に設定（数字1つ分） */
             height: var(--digit-height);
-            /* overflowをhiddenに戻す */
-            overflow: hidden; 
+            overflow: hidden;
         }
-        
-        /* メインリール内の数字コンテナとストリップ */
+
         #timer-display .digit-container {
             position: relative;
             display: inline-block;
-            /* overflow: hidden; これを残す！ */
-            overflow: hidden; 
-            height: var(--digit-height); /* 数字1つ分の高さ */
+            overflow: hidden;
+            height: var(--digit-height);
             line-height: var(--digit-height);
-            width: 0.6em; /* 数字の幅を調整 */
-            text-align: center; /* 数字を中央揃え */
+            width: 0.6em;
+            text-align: center;
         }
 
         #timer-display .digit-strip {
@@ -215,17 +211,17 @@
             top: 0;
             left: 0;
             width: 100%;
-            transition: transform 0.4s cubic-bezier(0.64, 0.04, 0.35, 1); /* リールの動き */
-            /* ここで上下にパディングを追加して、上下の数字がはみ出すようにする */
-            padding-top: var(--digit-height); 
+            transition: transform 0.4s cubic-bezier(0.64, 0.04, 0.35, 1);
+            padding-top: var(--digit-height);
             padding-bottom: var(--digit-height);
-            /* 初期位置を調整して、数字の中心が中央に来るように */
-            transform: translateY(calc(-1 * var(--digit-height))); /* 1つ上の数字が見えるように */
-            color: currentColor; /* 各数字の色を親から継承させる */
+            /* ここで初期位置のズレを修正するよ！ */
+            /* 0の数字が表示されるように調整 */
+            transform: translateY(calc(-1 * (1 + 0) * var(--digit-height))); 
+            color: currentColor;
         }
 
         #timer-display .digit-strip > div {
-            height: var(--digit-height); /* 各数字の高さ */
+            height: var(--digit-height);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -236,37 +232,42 @@
             margin: 0 0.1em;
             height: var(--digit-height);
             line-height: var(--digit-height);
-            /* コロンも縦に並んだ数字と位置を合わせる */
             position: relative;
-            top: 0; /* digit-stripのpadding-topを考慮 */
+            top: 0;
         }
 
-        /* --- 操作ボタン --- */
+        /* --- 操作ボタン & 時間設定 --- */
         .timer-controls {
+            gap: clamp(10px, 3vw, 20px);
             display: flex;
-            gap: 20px;
+            justify-content: center;
+            width: 100%;
         }
-        .timer-controls button {
-            font-size: clamp(2rem, 7vw, 2.5rem);
-        }
-        
-        /* --- 時間設定 --- */
+
         .time-settings {
+            transition: opacity 0.4s ease, visibility 0.4s ease, max-height 0.4s ease-in-out, margin 0.4s ease;
+            max-height: 100px;
+            overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-top: 10px;
-            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            gap: clamp(8px, 2vw, 15px);
+            margin-top: clamp(5px, 2vh, 10px);
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
+        .timer-controls button {
+            font-size: clamp(1.8rem, 6vw, 2.2rem);
+        }
+
         .time-settings label {
             font-weight: 500;
         }
         .time-settings input {
-            width: 70px;
-            padding: 8px;
-            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            width: clamp(50px, 15vw, 70px);
+            padding: clamp(6px, 1.5vw, 8px);
+            font-size: inherit;
             text-align: center;
             background-color: transparent;
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -285,10 +286,24 @@
 
         /* --- 右上：モード切替 --- */
         #mode-toggle {
-            font-size: clamp(1.5rem, 4vw, 1.75rem);
+            font-size: clamp(1.3rem, 4vw, 1.8rem);
         }
 
-        /* 通知バナー */
+        /* --- 左下：環境音ボタン --- */
+        #rain-sound-toggle {
+            font-size: clamp(1.3rem, 4vw, 1.8rem);
+        }
+
+        /* --- 集中モード用のスタイル --- */
+        body.timer-running-mode .time-settings {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            max-height: 0;
+            margin: 0;
+        }
+
+        /* --- 通知バナー --- */
         .notification-banner {
             position: fixed;
             top: 20px;
@@ -315,56 +330,105 @@
             color: black;
         }
 
+        /* --- 雨のアニメーション --- */
+        #rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            pointer-events: none; /* クリックイベントを透過 */
+            z-index: 0; /* 他のコンテンツの下に配置 */
+            opacity: 0; /* 初期は非表示 */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #rain-container.show {
+            opacity: 0.6; /* 雨の濃度（調整可能） */
+        }
+
+        .raindrop {
+            position: absolute;
+            background-color: rgba(173, 216, 230, 0.8); /* 薄い水色 */
+            width: 1px; /* 雨粒の幅 */
+            height: 10px; /* 雨粒の長さ */
+            opacity: 0; /* 初期は透明 */
+            animation: rain-fall linear infinite;
+        }
+
+        @keyframes rain-fall {
+            0% {
+                transform: translateY(-100px) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1; /* 徐々に表示 */
+            }
+            90% {
+                opacity: 1; /* ほとんどの時間を表示状態に */
+            }
+            100% {
+                transform: translateY(110vh) translateX(50px); /* 画面下まで落ちて少し横に流れる */
+                opacity: 0;
+            }
+        }
+
         /* --- レスポンシブ対応 --- */
         @media (max-width: 768px) {
             body {
-                padding: 12px;
-                grid-template-rows: auto 1fr;
-                grid-template-areas:
-                    "clock clock top-right"
-                    "center center center";
+                padding: calc(var(--padding-base) * 0.75); /* スマホでの余白を調整 */
             }
-
-            .timer-display-wrapper {
-                padding: 8px 20px;
+            #clock {
+                font-size: clamp(1.2rem, 4vw, 1.8rem); /* スマホでの時計サイズ */
             }
-
-            .time-settings {
-                gap: 10px;
+            #mode-toggle, #total-study-time-toggle, #rain-sound-toggle {
+                font-size: clamp(1.5rem, 5vw, 2rem); /* スマホでのアイコンサイズ */
             }
-
-            .time-settings input {
-                width: 60px;
-                padding: 6px;
+            #total-study-time-display {
+                font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+                right: calc(100% + 8px); /* スマホでのアイコン左側からのギャップ */
             }
-
-            .notification-banner {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                right: 10px;
+            .raindrop { /* スマホでは雨粒を細かくする */
+                width: 0.8px;
+                height: 8px;
             }
         }
 
         @media (max-height: 600px) and (orientation: landscape) {
             body {
-                padding: 8px;
+                padding: calc(var(--padding-base) * 0.5); /* 横長画面ではさらに余白を小さく */
                 grid-template-rows: auto 1fr;
                 grid-template-areas:
-                    "clock center top-right"
-                    ". center .";
+                    "top-left center top-right"
+                    "bottom-left center bottom-right"; /* 横長画面のレイアウトを調整 */
+                align-items: center; /* 縦中央揃え */
             }
-
             .timer-container {
-                gap: 10px;
+                gap: clamp(5px, 1.5vh, 10px);
             }
-
             .timer-display-wrapper {
-                padding: 5px 15px;
+                padding: clamp(3px, 1vw, 5px) clamp(10px, 3vw, 15px);
             }
-
+            #timer-display {
+                font-size: clamp(2.5rem, 8vw, 5rem);
+            }
             .time-settings {
-                margin-top: 5px;
+                margin-top: clamp(2px, 1vh, 5px);
+                gap: clamp(5px, 1.5vw, 10px);
+            }
+            .timer-controls button {
+                font-size: clamp(1.3rem, 4vw, 1.8rem);
+            }
+            #clock, #mode-toggle, #rain-sound-toggle, #total-study-time-toggle {
+                font-size: clamp(1rem, 3vw, 1.3rem); /* 横長画面でのアイコンサイズ */
+            }
+            #total-study-time-display {
+                font-size: clamp(0.6rem, 2vw, 0.8rem);
+                right: calc(100% + 5px); /* 横長画面でのアイコン左側からのギャップ */
+            }
+            .raindrop { /* 横長画面では雨粒を調整 */
+                height: 7px;
             }
         }
     </style>
@@ -380,7 +444,7 @@
         <div class="timer-display-wrapper">
             <div id="timer-display"></div>
         </div>
-        
+
         <div class="timer-controls">
             <button id="start-pause" title="開始/一時停止"><i class="ri-play-circle-line"></i></button>
             <button id="reset" title="リセット"><i class="ri-restart-line"></i></button>
@@ -396,7 +460,19 @@
         </div>
     </div>
 
+    <div class="bottom-left-controls">
+        <button id="rain-sound-toggle" title="雨の音をオン/オフ"><i class="ri-contrast-drop-line"></i></button>
+        <audio id="rain-audio" src="./sounds/rain.mp3" loop></audio>
+    </div>
+
+    <div class="bottom-right-controls">
+        <div id="total-study-time-display"></div>
+        <button id="total-study-time-toggle" title="今日の集中時間"><i class="ri-time-line"></i></button>
+    </div>
+
     <div class="notification-banner" id="notification-banner"></div>
+
+    <div id="rain-container"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -411,15 +487,23 @@
             const studyTimeInput = getEl('study-time-input');
             const breakTimeInput = getEl('break-time-input');
             const notificationBanner = getEl('notification-banner');
+            const rainSoundToggleBtn = getEl('rain-sound-toggle');
+            const rainAudio = getEl('rain-audio');
+            const totalStudyTimeToggleBtn = getEl('total-study-time-toggle'); // 新しいボタン
+            const totalStudyTimeDisplay = getEl('total-study-time-display'); // 新しい表示要素
+            const rainContainer = getEl('rain-container'); // 雨アニメーションコンテナ
 
             // --- 状態変数 ---
             let timerInterval;
             let currentMode = 'study';
             let totalSeconds = parseInt(studyTimeInput.value) * 60;
-            let initialDuration = totalSeconds; 
             let isTimerRunning = false;
             const originalTitle = document.title;
             let wakeLock = null;
+            let isRainSoundPlaying = false;
+            let currentDayTotalStudySeconds = 0; // 今日の合計集中時間（秒）
+            let lastStartTime = null; // 最後にタイマーが開始された時刻
+            let isTotalTimeVisible = false; // 合計時間表示の状態
 
             // --- 通知関連 ---
             const showNotification = (message, duration = 3000) => {
@@ -435,13 +519,7 @@
                 try {
                     if ('wakeLock' in navigator) {
                         wakeLock = await navigator.wakeLock.request('screen');
-                        showNotification('画面スリープを無効にしました');
-                        
-                        wakeLock.addEventListener('release', () => {
-                            console.log('Wake Lock released');
-                        });
-                    } else {
-                        showNotification('このブラウザではスリープ制御に対応していません');
+                        wakeLock.addEventListener('release', () => console.log('Wake Lock released'));
                     }
                 } catch (err) {
                     console.error('Wake Lock failed:', err);
@@ -452,42 +530,47 @@
                 if (wakeLock) {
                     wakeLock.release();
                     wakeLock = null;
-                    showNotification('画面スリープを有効にしました');
                 }
             };
 
             // --- 音声生成関数 ---
             const playBeep = (frequency = 800, duration = 200) => {
                 if (!window.AudioContext && !window.webkitAudioContext) return;
-                
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-                
                 oscillator.frequency.value = frequency;
                 oscillator.type = 'sine';
-                
                 gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-                
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + duration / 1000);
             };
 
             // --- localStorage関数 ---
+            const getTodayKey = () => {
+                const today = new Date();
+                return `focusTimer_totalStudy_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+            };
+
+            const saveTotalStudyTime = () => {
+                localStorage.setItem(getTodayKey(), currentDayTotalStudySeconds.toString());
+            };
+
+            const loadTotalStudyTime = () => {
+                const savedTime = localStorage.getItem(getTodayKey());
+                currentDayTotalStudySeconds = savedTime ? parseInt(savedTime) : 0;
+            };
+
             const saveToStorage = () => {
-                const data = {
+                localStorage.setItem('focusTimer', JSON.stringify({
                     studyTime: parseInt(studyTimeInput.value),
                     breakTime: parseInt(breakTimeInput.value),
-                    currentMode: currentMode,
-                    totalSeconds: totalSeconds,
-                    isTimerRunning: isTimerRunning,
-                    lightMode: document.body.classList.contains('light-mode')
-                };
-                localStorage.setItem('focusTimer', JSON.stringify(data));
+                    lightMode: document.body.classList.contains('light-mode'),
+                    isRainSoundPlaying: isRainSoundPlaying
+                }));
             };
 
             const loadFromStorage = () => {
@@ -496,17 +579,28 @@
                     const data = JSON.parse(saved);
                     studyTimeInput.value = data.studyTime || 25;
                     breakTimeInput.value = data.breakTime || 5;
-                    currentMode = data.currentMode || 'study';
-                    totalSeconds = data.totalSeconds || (parseInt(studyTimeInput.value) * 60);
-                    
                     if (data.lightMode) {
                         document.body.classList.add('light-mode');
                         modeToggleBtn.innerHTML = '<i class="ri-moon-line"></i>';
                     }
-                    
-                    initialDuration = totalSeconds;
-                    // updateTimerDisplay() は createDigitStructure の後で呼ぶ
+                    // 雨の音の状態を読み込み、アニメーションも連動させる
+                    if (data.isRainSoundPlaying) {
+                        isRainSoundPlaying = true;
+                        rainSoundToggleBtn.innerHTML = '<i class="ri-contrast-drop-fill"></i>';
+                        rainAudio.play().catch(e => console.error("雨の音を自動再生できませんでした: ", e));
+                        rainContainer.classList.add('show'); // アニメーション表示
+                    } else {
+                        rainContainer.classList.remove('show'); // アニメーション非表示
+                    }
                 }
+                loadTotalStudyTime(); // 合計勉強時間も読み込む
+                resetTimer(false);
+            };
+
+            // --- UI更新 ---
+            const updateUIForTimerState = () => {
+                document.body.classList.toggle('timer-running-mode', isTimerRunning);
+                startPauseBtn.innerHTML = isTimerRunning ? '<i class="ri-pause-circle-line"></i>' : '<i class="ri-play-circle-line"></i>';
             };
 
             // --- 時計 ---
@@ -520,24 +614,9 @@
             updateClock();
 
             // --- 数字リール構造の作成 (汎用関数) ---
-            const createDigitStructure = (targetElement, initialDisplayString, digitHeightVar = '--digit-height') => {
-                targetElement.innerHTML = ''; // 既存の数字表示をクリア
-
-                // targetElementのfontSizeを正確に取得するために一時的なdivを使用
-                const tempDiv = document.createElement('div');
-                tempDiv.style.visibility = 'hidden';
-                tempDiv.style.position = 'absolute';
-                tempDiv.style.fontSize = getComputedStyle(targetElement).fontSize;
-                document.body.appendChild(tempDiv);
-                const computedFontSize = parseFloat(getComputedStyle(tempDiv).fontSize);
-                document.body.removeChild(tempDiv);
-                
-                // digit-stripがpadding-top/bottomを持つので、
-                // digit-containerのheightはそのままdigit-heightに設定
-                const digitHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(digitHeightVar)) * computedFontSize;
-                
-                for (let i = 0; i < initialDisplayString.length; i++) {
-                    const char = initialDisplayString[i];
+            const createDigitStructure = (targetElement, initialDisplayString) => {
+                targetElement.innerHTML = '';
+                for (const char of initialDisplayString) {
                     if (char === ':') {
                         const colon = document.createElement('span');
                         colon.className = 'colon';
@@ -546,27 +625,18 @@
                     } else {
                         const container = document.createElement('div');
                         container.className = 'digit-container';
-
                         const digitStrip = document.createElement('div');
                         digitStrip.className = 'digit-strip';
-
-                        // 0から9までの数字をリールに追加
                         for (let d = 0; d <= 9; d++) {
                             const digitDiv = document.createElement('div');
                             digitDiv.textContent = d;
                             digitStrip.appendChild(digitDiv);
                         }
-                        
                         container.appendChild(digitStrip);
                         targetElement.appendChild(container);
-
-                        // 初期表示の数字にリールを合わせる
                         const initialDigit = parseInt(char);
                         if (!isNaN(initialDigit)) {
-                            // padding-topを考慮して初期位置を調整
-                            // CSSで`transform: translateY(calc(-1 * var(--digit-height)));`を設定済みなので、
-                            // ここでは`initialDigit`の分だけ上に移動させる
-                            digitStrip.style.transform = `translateY(calc(-1 * var(--digit-height) - ${initialDigit * digitHeight}px))`;
+                            digitStrip.style.transform = `translateY(calc(-1 * (1 + ${initialDigit}) * var(--digit-height)))`;
                         }
                     }
                 }
@@ -577,56 +647,80 @@
                 const minutes = Math.floor(totalSeconds / 60);
                 const seconds = totalSeconds % 60;
                 const displayString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                document.title = `${displayString} - ${originalTitle}`;
 
-                const mainDigitStrips = timerDisplay.querySelectorAll('.digit-strip');
-                const mainDigitHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--digit-height')) * parseFloat(getComputedStyle(timerDisplay).fontSize);
+                const mainDigitContainers = timerDisplay.querySelectorAll('.digit-container');
                 let mainStripIndex = 0;
-                for (let i = 0; i < displayString.length; i++) {
-                    const char = displayString[i];
+                for (const char of displayString) {
                     if (char === ':') continue;
-
                     const newDigit = parseInt(char);
-                    if (!isNaN(newDigit) && mainDigitStrips[mainStripIndex]) {
-                        // padding-topを考慮して新しい数字の位置に移動
-                        mainDigitStrips[mainStripIndex].style.transform = `translateY(calc(-1 * var(--digit-height) - ${newDigit * mainDigitHeight}px))`;
+                    if (!isNaN(newDigit) && mainDigitContainers[mainStripIndex]) {
+                        const digitStrip = mainDigitContainers[mainStripIndex].querySelector('.digit-strip');
+                        if (digitStrip) {
+                             digitStrip.style.transform = `translateY(calc(-1 * (1 + ${newDigit}) * var(--digit-height)))`;
+                        }
                     }
                     mainStripIndex++;
                 }
+            };
 
-                document.title = `${displayString} - ${originalTitle}`;
+            // --- 合計集中時間表示更新 ---
+            const updateTotalStudyTimeDisplay = () => {
+                const hours = Math.floor(currentDayTotalStudySeconds / 3600);
+                const minutes = Math.floor((currentDayTotalStudySeconds % 3600) / 60);
+                const seconds = currentDayTotalStudySeconds % 60;
+
+                let displayStr = '';
+                if (hours > 0) {
+                    displayStr += `${hours}時間`;
+                }
+                if (minutes > 0 || hours > 0) {
+                    displayStr += `${minutes}分`;
+                }
+                displayStr += `${seconds}秒`;
+
+                if (currentDayTotalStudySeconds === 0) {
+                    displayStr = '0秒';
+                }
+
+                totalStudyTimeDisplay.textContent = `今日の集中: ${displayStr}`;
+            };
+
+            const toggleTotalTimeDisplay = () => {
+                isTotalTimeVisible = !isTotalTimeVisible;
+                totalStudyTimeDisplay.classList.toggle('show', isTotalTimeVisible);
+                if (isTotalTimeVisible) {
+                    updateTotalStudyTimeDisplay();
+                }
             };
 
             // --- タイマー本体 ---
             const startTimer = () => {
                 if (isTimerRunning) return;
                 isTimerRunning = true;
-                initialDuration = totalSeconds > 0 ? totalSeconds : (
-                    currentMode === 'study' ? parseInt(studyTimeInput.value) : parseInt(breakTimeInput.value)
-                ) * 60 || 0;
-
-                startPauseBtn.innerHTML = '<i class="ri-pause-circle-line"></i>';
-                
+                updateUIForTimerState();
                 requestWakeLock();
-                saveToStorage();
+                if (currentMode === 'study') {
+                    lastStartTime = Date.now();
+                }
 
                 timerInterval = setInterval(() => {
                     totalSeconds--;
                     updateTimerDisplay();
-                    saveToStorage();
 
-                    if (totalSeconds <= 4 && totalSeconds >= 1) {
-                        playBeep(1000, 150);
+                    if (currentMode === 'study') {
+                        currentDayTotalStudySeconds++;
+                        saveTotalStudyTime();
+                        if (isTotalTimeVisible) {
+                            updateTotalStudyTimeDisplay();
+                        }
                     }
 
+                    if (totalSeconds <= 4 && totalSeconds >= 1) playBeep(1000, 150);
                     if (totalSeconds <= 0) {
                         clearInterval(timerInterval);
-                        isTimerRunning = false;
-                        releaseWakeLock();
-                        
-                        setTimeout(() => {
-                            playBeep(600, 800);
-                        }, 200);
-                        
+                        isTimerRunning = false; // ★ ここにisTimerRunningをfalseにする行を追加！
+                        setTimeout(() => playBeep(600, 800), 200);
                         switchMode();
                     }
                 }, 1000);
@@ -635,100 +729,181 @@
             const pauseTimer = () => {
                 clearInterval(timerInterval);
                 isTimerRunning = false;
-                startPauseBtn.innerHTML = '<i class="ri-play-circle-line"></i>';
                 releaseWakeLock();
-                saveToStorage();
+                updateUIForTimerState();
+                if (currentMode === 'study' && lastStartTime) { 
+                    saveTotalStudyTime();
+                    if (isTotalTimeVisible) {
+                        updateTotalStudyTimeDisplay();
+                    }
+                }
             };
-            
-            const resetTimer = () => {
+
+            const resetTimer = (playAnimation = true) => {
                 pauseTimer();
                 currentMode = 'study';
                 totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
-                initialDuration = totalSeconds;
+
                 const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
-                
-                createDigitStructure(timerDisplay, displayString, '--digit-height');
-                updateTimerDisplay(); // 初期表示を更新
+                createDigitStructure(timerDisplay, displayString);
+                updateTimerDisplay();
                 timerDisplay.classList.remove('resting');
-                saveToStorage();
+                lastStartTime = null;
             };
 
             const switchMode = () => {
-                currentMode = (currentMode === 'study') ? 'break' : 'study';
-                totalSeconds = parseInt(
-                    currentMode === 'study' ? studyTimeInput.value : breakTimeInput.value
-                ) * 60 || 0;
-
-                initialDuration = totalSeconds;
-                const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
-                
-                createDigitStructure(timerDisplay, displayString, '--digit-height');
-                updateTimerDisplay(); // 初期表示を更新
-
-                if (currentMode === 'break') {
-                    timerDisplay.classList.add('resting');
-                } else {
-                    timerDisplay.classList.remove('resting');
+                if (currentMode === 'study' && lastStartTime) {
+                    saveTotalStudyTime();
+                    if (isTotalTimeVisible) {
+                        updateTotalStudyTimeDisplay();
+                    }
                 }
 
-                saveToStorage();
+                currentMode = (currentMode === 'study') ? 'break' : 'study';
+                totalSeconds = parseInt(currentMode === 'study' ? studyTimeInput.value : breakTimeInput.value) * 60 || 0;
+
+                const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
+                createDigitStructure(timerDisplay, displayString);
+                updateTimerDisplay();
+
+                timerDisplay.classList.toggle('resting', currentMode === 'break');
+
+                if (currentMode === 'study') {
+                    lastStartTime = Date.now();
+                } else {
+                    lastStartTime = null;
+                }
                 startTimer();
             };
 
+            // --- 雨アニメーション関連 ---
+            const MAX_RAINDROPS = 100; // ★同時に表示する雨粒の最大数（調整可能）
+
+            const createRaindrop = () => {
+                const drop = document.createElement('div');
+                drop.className = 'raindrop';
+                // 画面の横幅全体からランダムな位置に配置
+                drop.style.left = `${Math.random() * 100}vw`;
+                // ランダムなアニメーションの速さ
+                drop.style.animationDuration = `${Math.random() * 0.8 + 0.7}s`; // 0.7sから1.5s
+                // ランダムなアニメーションの遅延
+                drop.style.animationDelay = `${Math.random() * 5}s`; // 0sから5sの遅延
+                rainContainer.appendChild(drop);
+
+                // ★ 最大数を超えたら、一番古い雨粒を削除
+                if (rainContainer.children.length > MAX_RAINDROPS) {
+                    rainContainer.removeChild(rainContainer.children[0]);
+                }
+            };
+
+            let rainAnimationInterval;
+            const startRainAnimation = () => {
+                if (!rainAnimationInterval) {
+                    // 最初にある程度の雨粒を生成 (MAX_RAINDROPSの半数程度を初期生成)
+                    for (let i = 0; i < MAX_RAINDROPS / 2; i++) { 
+                        createRaindrop();
+                    }
+                    // その後、定期的に新しい雨粒を生成
+                    rainAnimationInterval = setInterval(createRaindrop, 100); // 100msごとに1つ生成
+                    rainContainer.classList.add('show');
+                }
+            };
+
+            const stopRainAnimation = () => {
+                clearInterval(rainAnimationInterval);
+                rainAnimationInterval = null;
+                rainContainer.classList.remove('show');
+                // 既存の雨粒を全て削除
+                rainContainer.innerHTML = '';
+            };
+
+
+            // --- 環境音の切り替え関数 ---
+            const toggleRainSound = () => {
+                if (isRainSoundPlaying) {
+                    rainAudio.pause();
+                    isRainSoundPlaying = false;
+                    rainSoundToggleBtn.innerHTML = '<i class="ri-contrast-drop-line"></i>';
+                    stopRainAnimation(); // アニメーション停止
+                    showNotification('雨の音をオフにしたよ！', 2000);
+                } else {
+                    rainAudio.play().catch(e => {
+                        console.error("雨の音を再生できなかったよ: ", e);
+                        showNotification('ごめんね、雨の音を再生できなかったよ…', 3000);
+                        isRainSoundPlaying = false; // 再生失敗時は状態を戻す
+                        return; // 失敗時はアニメーションも開始しない
+                    });
+                    isRainSoundPlaying = true;
+                    rainSoundToggleBtn.innerHTML = '<i class="ri-contrast-drop-fill"></i>';
+                    startRainAnimation(); // アニメーション開始
+                    showNotification('雨の音をオンにしたよ！', 2000);
+                }
+                saveToStorage();
+            };
+
+            // 日付が変わったときに合計時間をリセットする処理
+            const checkAndResetDailyTotal = () => {
+                const lastDateKey = localStorage.getItem('lastAccessDate');
+                const todayKey = getTodayKey();
+
+                if (lastDateKey !== todayKey) {
+                    currentDayTotalStudySeconds = 0;
+                    saveTotalStudyTime();
+                    localStorage.setItem('lastAccessDate', todayKey);
+                }
+                updateTotalStudyTimeDisplay();
+            };
+
             // --- イベントリスナー ---
-            startPauseBtn.addEventListener('click', () => {
-                isTimerRunning ? pauseTimer() : startTimer();
-            });
+            startPauseBtn.addEventListener('click', () => isTimerRunning ? pauseTimer() : startTimer());
+            resetBtn.addEventListener('click', () => resetTimer(true));
 
-            resetBtn.addEventListener('click', resetTimer);
-
-            studyTimeInput.addEventListener('input', () => {
-                if (!isTimerRunning && currentMode === 'study') {
-                    totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
-                    initialDuration = totalSeconds;
-                    const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
-                    
-                    createDigitStructure(timerDisplay, displayString, '--digit-height');
-                    updateTimerDisplay();
-                }
+            const handleTimeInputChange = () => {
+                if (!isTimerRunning) resetTimer(false);
                 saveToStorage();
-            });
-
-            breakTimeInput.addEventListener('input', () => {
-                if (!isTimerRunning && currentMode === 'break') {
-                    totalSeconds = parseInt(breakTimeInput.value) * 60 || 0;
-                    initialDuration = totalSeconds;
-                    const displayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
-                    
-                    createDigitStructure(timerDisplay, displayString, '--digit-height');
-                    updateTimerDisplay();
-                }
-                saveToStorage();
-            });
+            };
+            studyTimeInput.addEventListener('change', handleTimeInputChange);
+            breakTimeInput.addEventListener('change', handleTimeInputChange);
 
             modeToggleBtn.addEventListener('click', () => {
                 document.body.classList.toggle('light-mode');
-                const isLight = document.body.classList.contains('light-mode');
-                modeToggleBtn.innerHTML = isLight ? '<i class="ri-moon-line"></i>' : '<i class="ri-sun-line"></i>';
+                modeToggleBtn.innerHTML = document.body.classList.contains('light-mode') ? '<i class="ri-moon-line"></i>' : '<i class="ri-sun-line"></i>';
                 saveToStorage();
             });
+
+            rainSoundToggleBtn.addEventListener('click', toggleRainSound);
+
+            totalStudyTimeToggleBtn.addEventListener('click', toggleTotalTimeDisplay);
 
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && isTimerRunning) {
                     showNotification('タイマーがバックグラウンドで実行中です', 5000);
                 }
+                if (!document.hidden && isTimerRunning) {
+                    requestWakeLock();
+                }
             });
 
-            window.addEventListener('beforeunload', () => {
-                saveToStorage();
-                releaseWakeLock();
+            window.addEventListener('beforeunload', releaseWakeLock);
+
+            // --- キーボードイベントリスナーの追加 ---
+            document.addEventListener('keydown', (e) => {
+                if (document.activeElement === studyTimeInput || document.activeElement === breakTimeInput) {
+                    return;
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    isTimerRunning ? pauseTimer() : startTimer();
+                } else if (e.code === 'KeyR') {
+                    e.preventDefault();
+                    resetTimer(true);
+                }
             });
 
             // --- 初期化 ---
+            checkAndResetDailyTotal();
             loadFromStorage();
-            const initialDisplayString = String(Math.floor(totalSeconds / 60)).padStart(2, '0') + ':' + String(totalSeconds % 60).padStart(2, '0');
-            createDigitStructure(timerDisplay, initialDisplayString, '--digit-height');
-            updateTimerDisplay();
         });
     </script>
 </body>
