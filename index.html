@@ -197,6 +197,113 @@
         .notification-banner { position: fixed; top: 20px; right: 20px; background: rgba(0, 0, 0, 0.9); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transform: translateX(100%); transition: all 0.3s ease; z-index: 1000; backdrop-filter: blur(10px); }
         .notification-banner.show { opacity: 1; transform: translateX(0); }
         body.light-mode .notification-banner { background: rgba(255, 255, 255, 0.9); color: black; }
+
+        /* スマホ横向き時のレイアウト調整 */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            body {
+                grid-template-columns: 1fr 1fr; /* 2カラムにする */
+                grid-template-rows: auto 1fr auto;
+                grid-template-areas:
+                    "top-left top-right"
+                    "center center" /* タイマー部分は中央に */
+                    "bottom-left bottom-right";
+                padding: 10px; /* パディングを少し減らす */
+            }
+
+            #clock {
+                justify-self: start;
+                padding-left: 10px; /* 左寄せ */
+            }
+
+            .top-right-controls {
+                justify-self: end;
+                padding-right: 10px; /* 右寄せ */
+            }
+
+            .timer-container {
+                height: auto; /* 高さを自動調整 */
+                overflow-y: visible; /* スクロールを解除 */
+                padding: 5px 0; /* パディングを調整 */
+            }
+
+            .timer-wrapper {
+                flex-direction: row; /* 横並びにする */
+                flex-wrap: wrap; /* 折り返す */
+                justify-content: center;
+                gap: 10px; /* Gapを調整 */
+            }
+
+            .timer-display-wrapper {
+                flex-basis: 100%; /* タイマー表示は幅100% */
+                padding: clamp(5px, 2vw, 8px) clamp(10px, 4vw, 20px); /* パディング調整 */
+            }
+
+            #timer-display {
+                font-size: clamp(2.5rem, 8vw, 5rem); /* フォントサイズを調整 */
+                height: auto; /* 高さを自動調整 */
+            }
+
+            .timer-controls {
+                flex-basis: 100%; /* 操作ボタンも幅100% */
+                justify-content: center;
+                gap: clamp(8px, 2vw, 15px);
+            }
+
+            .timer-controls button {
+                font-size: clamp(1.8rem, 6vw, 2.5rem); /* アイコンサイズを調整 */
+            }
+
+            .time-settings {
+                flex-basis: 100%; /* 設定も幅100% */
+                margin-top: 5px; /* マージンを調整 */
+                font-size: clamp(0.7rem, 1.8vw, 0.85rem); /* フォントサイズを調整 */
+            }
+
+            .time-settings input {
+                width: clamp(40px, 12vw, 60px); /* 入力欄の幅を調整 */
+                padding: clamp(4px, 1vw, 6px); /* パディングを調整 */
+            }
+
+            .music-player-container {
+                margin-top: 15px; /* マージンを調整 */
+                flex-basis: 100%; /* 音楽プレイヤーも幅100% */
+                max-width: 100%; /* 最大幅を解除 */
+            }
+
+            .player-controls button {
+                font-size: clamp(1.8rem, 6vw, 2.2rem); /* 音楽プレイヤーアイコンサイズを調整 */
+            }
+
+            .bottom-left-controls, .bottom-right-controls {
+                align-self: flex-end; /* 下に揃える */
+                position: relative;
+                padding-bottom: 5px; /* 下に少しパディング */
+            }
+
+            #menu-panel, #total-study-time-display {
+                position: fixed; /* 固定位置にする */
+                bottom: auto; /* autoに戻す */
+                top: 50%; /* 画面中央に配置 */
+                left: 50%;
+                transform: translate(-50%, -50%); /* 中央寄せ */
+                max-height: 90vh; /* 高さの最大値を調整 */
+                width: 90vw; /* 幅を調整 */
+                padding: 10px;
+                border-radius: 10px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            }
+
+            #menu-panel.show, #total-study-time-display.show {
+                transform: translate(-50%, -50%); /* 中央寄せを維持 */
+                opacity: 1; visibility: visible;
+            }
+
+            .cd-animation-container {
+                width: clamp(150px, 40vw, 250px); /* CDアニメーションのサイズ調整 */
+                height: clamp(150px, 40vw, 250px);
+                bottom: -5vh; /* 位置を少し上に */
+            }
+        }
     </style>
 </head>
 <body>
@@ -253,6 +360,12 @@
                 <div class="menu-label"><i class="ri-music-2-line"></i><label for="music-player-toggle">音楽</label></div>
                  <label class="switch"> <input type="checkbox" id="music-player-toggle"> <span class="slider"></span> </label>
             </div>
+            <div class="menu-item">
+                <div class="menu-label"><i class="ri-volume-up-line"></i><label>音楽音量</label></div>
+                <div class="ambient-controls">
+                    <input type="range" class="volume-slider" id="music-volume-slider" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            </div>
         </div>
     </div>
     <div id="audio-container"></div>
@@ -297,6 +410,7 @@
         const cdContainer = getEl('cd-animation-container'), cdDisk = getEl('cd-disk');
         const ambientContainer = getEl('ambient-sounds-container'), audioContainer = getEl('audio-container');
         const rainContainer = getEl('rain-container');
+        const musicVolumeSlider = getEl('music-volume-slider'); // 音楽音量スライダーを追加
 
         // 状態変数
         let timerInterval, wakeLock, currentTrackIndex = 0, currentMode = 'study', totalSeconds = 0;
@@ -308,26 +422,41 @@
         // --- 初期化処理 ---
         const init = () => {
             setTimeout(() => {
-                splashScreen.style.transition = 'opacity 1s ease-out'; // ゆっくりフェードアウトする設定を追加
-                splashScreen.style.opacity = '0'; // 透明にする
-                // opacityが0になってから、display: noneにするためにさらに待つ
+                splashScreen.style.transition = 'opacity 1s ease-out';
+                splashScreen.style.opacity = '0';
                 setTimeout(() => {
-                    splashScreen.classList.add('hidden'); // hiddenクラスを追加して完全に非表示にする
-                }, 1000); // フェードアウトの完了を待つ (transitionの時間と同じにする)
-            }, 3500); // 3.5秒後にフェードアウトを開始する（タイトルの表示完了＋約0.7秒の待機時間）
+                    splashScreen.classList.add('hidden');
+                }, 1000);
+            }, 3500);
             
             setInterval(updateClock, 1000); updateClock();
             
             buildAmbientMenu();
-            loadSettings();
+            loadSettings(); // ambientSettings のロードをここで行う
             
             updateMusicInfo();
             checkAndResetDailyTotal();
             setupEventListeners();
 
+            // 音楽プレイヤーが表示されていて、再生中の場合は、音楽を再生しフェードイン
             if (isMusicPlayerVisible && isPlayingMusic) {
                 playPauseMusicBtn.innerHTML = '<i class="ri-pause-fill"></i>'; updateCdAnimation();
-                musicAudio.play().catch(() => { isPlayingMusic = false; updateCdAnimation(); });
+                fadeInAudio(musicAudio, parseFloat(musicVolumeSlider.value), 500).catch(() => { isPlayingMusic = false; updateCdAnimation(); });
+            }
+
+            // システムのテーマをチェックして初期モードを設定
+            if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+                document.body.classList.add('light-mode');
+                modeToggleBtn.innerHTML = '<i class="ri-moon-line"></i>';
+            } else {
+                document.body.classList.remove('light-mode');
+                modeToggleBtn.innerHTML = '<i class="ri-sun-line"></i>';
+            }
+
+            // ★雨のトグルがオフの場合、雨のエフェクトを停止する
+            const rainToggle = ambientContainer.querySelector(`.ambient-toggle[data-sound-id="rain"]`);
+            if (rainToggle && !rainToggle.checked) {
+                stopRainAnimation();
             }
         };
 
@@ -362,15 +491,42 @@
                 ambientSettings[sound.id] = { enabled: toggle.checked, volume: parseFloat(slider.value) };
             });
             localStorage.setItem('focusTimer', JSON.stringify({
-                studyTime: parseInt(studyTimeInput.value), breakTime: parseInt(breakTimeInput.value),
+                studyTime: parseInt(studyTimeInput.value),
+                breakTime: parseInt(breakTimeInput.value),
                 lightMode: document.body.classList.contains('light-mode'),
-                ambientSettings, currentTrackIndex, isPlayingMusic, isMusicPlayerVisible,
+                ambientSettings,
+                currentTrackIndex,
+                isPlayingMusic,
+                isMusicPlayerVisible,
+                musicVolume: parseFloat(musicVolumeSlider.value), // 音楽音量を保存
+                isTimerRunning,
+                currentMode,
+                totalSeconds,
             }));
+            saveTotalStudyTime();
         };
         const loadSettings = () => {
             const settings = JSON.parse(localStorage.getItem('focusTimer') || '{}');
-            studyTimeInput.value = settings.studyTime || 25; breakTimeInput.value = settings.breakTime || 5;
-            if (settings.lightMode) { document.body.classList.add('light-mode'); modeToggleBtn.innerHTML = '<i class="ri-moon-line"></i>'; }
+            studyTimeInput.value = settings.studyTime || 25;
+            breakTimeInput.value = settings.breakTime || 5;
+
+            if (settings.lightMode !== undefined) {
+                if (settings.lightMode) {
+                    document.body.classList.add('light-mode');
+                    modeToggleBtn.innerHTML = '<i class="ri-moon-line"></i>';
+                } else {
+                    document.body.classList.remove('light-mode');
+                    modeToggleBtn.innerHTML = '<i class="ri-sun-line"></i>';
+                }
+            } else {
+                if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    document.body.classList.add('light-mode');
+                    modeToggleBtn.innerHTML = '<i class="ri-moon-line"></i>';
+                } else {
+                    document.body.classList.remove('light-mode');
+                    modeToggleBtn.innerHTML = '<i class="ri-sun-line"></i>';
+                }
+            }
 
             const ambientSettings = settings.ambientSettings || {};
             ambientSounds.forEach(sound => {
@@ -378,10 +534,12 @@
                 const toggle = ambientContainer.querySelector(`.ambient-toggle[data-sound-id="${sound.id}"]`);
                 const slider = ambientContainer.querySelector(`.volume-slider[data-sound-id="${sound.id}"]`);
                 toggle.checked = config.enabled; slider.value = config.volume;
-                audioElements[sound.id].volume = config.volume;
+                audioElements[sound.id].volume = config.volume; // 初期音量を設定
                 if(config.enabled) {
-                    audioElements[sound.id].play().catch(()=>{});
+                    fadeInAudio(audioElements[sound.id], config.volume, 1000).catch(()=>{}); // フェードインで再生
                     if(sound.animation === 'rain') startRainAnimation();
+                } else { // ★雨のトグルがオフの場合、雨のエフェクトを停止する
+                    if(sound.animation === 'rain') stopRainAnimation();
                 }
             });
             
@@ -391,18 +549,46 @@
             musicPlayerToggle.checked = isMusicPlayerVisible;
             updateMusicPlayerVisibility();
 
-            loadTotalStudyTime(); resetTimer(false);
+            musicVolumeSlider.value = settings.musicVolume !== undefined ? settings.musicVolume : 0.5; // 音楽音量を読み込み
+            musicAudio.volume = parseFloat(musicVolumeSlider.value); // 音楽オーディオの音量を設定
+
+            loadTotalStudyTime();
+
+            currentMode = settings.currentMode || 'study';
+            totalSeconds = settings.totalSeconds !== undefined ? settings.totalSeconds : parseInt(studyTimeInput.value) * 60;
+            isTimerRunning = settings.isTimerRunning || false;
+            
+            createDigitStructure(`${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`);
+            updateTimerDisplay();
+            timerDisplay.classList.toggle('resting', currentMode === 'break');
+            updateUIForTimerState();
+            if (isTimerRunning) {
+                startTimer();
+            }
         };
 
         // --- イベントリスナー設定 ---
         const setupEventListeners = () => {
             startPauseBtn.addEventListener('click', () => isTimerRunning ? pauseTimer() : startTimer());
             resetBtn.addEventListener('click', () => resetTimer(true));
-            [studyTimeInput, breakTimeInput].forEach(input => input.addEventListener('change', () => !isTimerRunning && resetTimer(false)));
-            modeToggleBtn.addEventListener('click', () => { document.body.classList.toggle('light-mode'); modeToggleBtn.innerHTML = document.body.classList.contains('light-mode') ? '<i class="ri-moon-line"></i>' : '<i class="ri-sun-line"></i>'; });
+            [studyTimeInput, breakTimeInput].forEach(input => input.addEventListener('change', () => {
+                if (!isTimerRunning) {
+                    resetTimer(false);
+                }
+                saveSettings();
+            }));
+            modeToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light-mode');
+                modeToggleBtn.innerHTML = document.body.classList.contains('light-mode') ? '<i class="ri-moon-line"></i>' : '<i class="ri-sun-line"></i>';
+                saveSettings();
+            });
             menuToggleBtn.addEventListener('click', toggleMenu);
-            document.addEventListener('click', e => { if (isMenuOpen && !menuToggleBtn.parentElement.contains(e.target)) toggleMenu(); });
-            musicPlayerToggle.addEventListener('change', () => { isMusicPlayerVisible = musicPlayerToggle.checked; updateMusicPlayerVisibility(); });
+            document.addEventListener('click', e => { if (isMenuOpen && !menuToggleBtn.parentElement.contains(e.target) && !menuPanel.contains(e.target)) toggleMenu(); });
+            musicPlayerToggle.addEventListener('change', () => {
+                isMusicPlayerVisible = musicPlayerToggle.checked;
+                updateMusicPlayerVisibility();
+                saveSettings();
+            });
             totalToggleBtn.addEventListener('click', toggleTotalTimeDisplay);
             [prevTrackBtn, playPauseMusicBtn, nextTrackBtn].forEach(btn => btn.addEventListener('click', handleMusicControl));
             musicAudio.addEventListener('ended', () => playTrack(1));
@@ -410,6 +596,10 @@
             document.addEventListener('keydown', handleKeyDown);
             ambientContainer.addEventListener('input', handleAmbientControl);
             ambientContainer.addEventListener('change', handleAmbientControl);
+            musicVolumeSlider.addEventListener('input', () => { // 音楽音量スライダーのイベントリスナー
+                musicAudio.volume = parseFloat(musicVolumeSlider.value);
+                saveSettings();
+            });
         };
 
         const handleAmbientControl = (e) => {
@@ -422,9 +612,21 @@
                 audio.volume = parseFloat(target.value);
             }
             if (target.classList.contains('ambient-toggle')) {
-                if (target.checked) audio.play().catch(()=>{}); else audio.pause();
-                if (soundId === 'rain') { if(target.checked) startRainAnimation(); else stopRainAnimation(); }
+                if (target.checked) {
+                    fadeInAudio(audio, parseFloat(ambientContainer.querySelector(`.volume-slider[data-sound-id="${soundId}"]`).value), 1000); // 環境音は1秒でフェードイン
+                    if(soundId === 'rain') startRainAnimation();
+                } else {
+                    // ★雨の音がオフになったらすぐに雨のエフェクトもオフにする
+                    if(soundId === 'rain') {
+                        fadeOutAudio(audio, 100, () => { // フェードアウト時間を短くしてすぐに停止
+                            stopRainAnimation();
+                        });
+                    } else {
+                        fadeOutAudio(audio, 1000); // その他の環境音はそのまま
+                    }
+                }
             }
+            saveSettings();
         };
 
         const handleMusicControl = (e) => {
@@ -432,6 +634,7 @@
             if (id === 'prev-track') playTrack(-1);
             else if (id === 'next-track') playTrack(1);
             else if (id === 'play-pause-music') toggleMusicPlay();
+            saveSettings();
         };
 
         // --- UI/機能ハンドラ ---
@@ -439,16 +642,50 @@
         const toggleMenu = () => { isMenuOpen = !isMenuOpen; menuPanel.classList.toggle('show', isMenuOpen); };
 
         // タイマー
-        const startTimer = () => { if (isTimerRunning) return; isTimerRunning = true; updateUIForTimerState(); requestWakeLock(); timerInterval = setInterval(runTimer, 1000); };
-        const pauseTimer = () => { clearInterval(timerInterval); isTimerRunning = false; releaseWakeLock(); updateUIForTimerState(); saveTotalStudyTime(); };
-        const resetTimer = (animate = true) => { pauseTimer(); currentMode = 'study'; totalSeconds = parseInt(studyTimeInput.value) * 60 || 0; createDigitStructure(`${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:00`); updateTimerDisplay(); timerDisplay.classList.remove('resting'); };
+        const startTimer = () => {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            updateUIForTimerState();
+            requestWakeLock();
+            timerInterval = setInterval(runTimer, 1000);
+            saveSettings();
+        };
+        const pauseTimer = () => {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            releaseWakeLock();
+            updateUIForTimerState();
+            saveSettings();
+        };
+        const resetTimer = (animate = true) => {
+            pauseTimer();
+            currentMode = 'study';
+            totalSeconds = parseInt(studyTimeInput.value) * 60 || 0;
+            createDigitStructure(`${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:00`);
+            updateTimerDisplay();
+            timerDisplay.classList.remove('resting');
+            saveSettings();
+        };
         const runTimer = () => {
             totalSeconds--;
             updateTimerDisplay();
             if (currentMode === 'study') { currentDayStudySeconds++; if (isTotalTimeVisible) updateTotalStudyTimeDisplay(); }
-            if (totalSeconds <= 0) { clearInterval(timerInterval); isTimerRunning = false; setTimeout(() => playBeep(600, 800), 200); switchMode(); }
+            if (totalSeconds <= 0) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                setTimeout(() => playBeep(600, 800), 200);
+                switchMode();
+            }
+            saveSettings();
         };
-        const switchMode = () => { saveTotalStudyTime(); currentMode = currentMode === 'study' ? 'break' : 'study'; totalSeconds = parseInt(currentMode === 'study' ? studyTimeInput.value : breakTimeInput.value) * 60 || 0; createDigitStructure(`${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:00`); timerDisplay.classList.toggle('resting', currentMode === 'break'); startTimer(); };
+        const switchMode = () => {
+            saveSettings();
+            currentMode = currentMode === 'study' ? 'break' : 'study';
+            totalSeconds = parseInt(currentMode === 'study' ? studyTimeInput.value : breakTimeInput.value) * 60 || 0;
+            createDigitStructure(`${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:00`);
+            timerDisplay.classList.toggle('resting', currentMode === 'break');
+            startTimer();
+        };
         const updateUIForTimerState = () => { document.body.classList.toggle('timer-running-mode', isTimerRunning); startPauseBtn.innerHTML = isTimerRunning ? '<i class="ri-pause-circle-line"></i>' : '<i class="ri-play-circle-line"></i>'; };
         const createDigitStructure = (initialString) => { timerDisplay.innerHTML = ''; for (const char of initialString) { if (char === ':') { timerDisplay.insertAdjacentHTML('beforeend', '<span class="colon">:</span>'); continue; } const d = document.createElement('div'); d.className = 'digit-container'; const s = document.createElement('div'); s.className = 'digit-strip'; for (let i = 0; i <= 9; i++) s.insertAdjacentHTML('beforeend', `<div>${i}</div>`); d.append(s); timerDisplay.append(d); const n = parseInt(char); if (!isNaN(n)) s.style.transform = `translateY(calc(-1 * (1 + ${n}) * var(--digit-height)))`; } };
         const updateTimerDisplay = () => { const m = Math.floor(totalSeconds / 60), s = totalSeconds % 60, str = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; document.title = `${str} - ${originalTitle}`; const strips = timerDisplay.querySelectorAll('.digit-strip'); let i = 0; for (const char of str.replace(':', '')) { if (strips[i]) strips[i].style.transform = `translateY(calc(-1 * (1 + ${char}) * var(--digit-height)))`; i++; } };
@@ -464,8 +701,60 @@
         const updateMusicPlayerVisibility = () => { musicPlayerContainer.classList.toggle('hidden', !isMusicPlayerVisible); if (!isMusicPlayerVisible && isPlayingMusic) toggleMusicPlay(); updateCdAnimation(); };
         const updateCdAnimation = () => { const shouldShow = isMusicPlayerVisible && isPlayingMusic; cdContainer.classList.toggle('show', shouldShow); cdDisk.classList.toggle('rotating', shouldShow); };
         const updateMusicInfo = () => { if (!musicData.length) return; const { title, artist, src } = musicData[currentTrackIndex]; musicTitle.textContent = title; musicArtist.textContent = artist; musicAudio.src = src; };
-        const toggleMusicPlay = () => { isPlayingMusic = !isPlayingMusic; if (isPlayingMusic) musicAudio.play().catch(() => isPlayingMusic = false); else musicAudio.pause(); playPauseMusicBtn.innerHTML = isPlayingMusic ? '<i class="ri-pause-fill"></i>' : '<i class="ri-play-fill"></i>'; updateCdAnimation(); };
-        const playTrack = (dir) => { if (!musicData.length) return; currentTrackIndex = (currentTrackIndex + dir + musicData.length) % musicData.length; updateMusicInfo(); if (isPlayingMusic) musicAudio.play(); };
+        const toggleMusicPlay = () => {
+            isPlayingMusic = !isPlayingMusic;
+            if (isPlayingMusic) {
+                fadeInAudio(musicAudio, parseFloat(musicVolumeSlider.value), 500); // 音楽は0.5秒でフェードイン
+            } else {
+                fadeOutAudio(musicAudio, 500); // 音楽は0.5秒でフェードアウト
+            }
+            playPauseMusicBtn.innerHTML = isPlayingMusic ? '<i class="ri-pause-fill"></i>' : '<i class="ri-play-fill"></i>';
+            updateCdAnimation();
+            saveSettings();
+        };
+        const playTrack = (dir) => {
+            if (!musicData.length) return;
+            currentTrackIndex = (currentTrackIndex + dir + musicData.length) % musicData.length;
+            updateMusicInfo();
+            if (isPlayingMusic) fadeInAudio(musicAudio, parseFloat(musicVolumeSlider.value), 500); // 曲変更時もフェードイン
+            saveSettings();
+        };
+
+        // フェードイン/アウト関数
+        const fadeInAudio = (audio, targetVolume, duration) => {
+            audio.play().catch(()=>{}); // まず再生を試みる
+            audio.volume = 0; // 初期音量を0に設定
+            let startTime = null;
+            const animate = (currentTime) => {
+                if (!startTime) startTime = currentTime;
+                const progress = (currentTime - startTime) / duration;
+                audio.volume = Math.min(targetVolume, targetVolume * progress);
+                if (progress < 1 && audio.volume < targetVolume) {
+                    requestAnimationFrame(animate);
+                } else {
+                    audio.volume = targetVolume; // 最終的に目標音量に設定
+                }
+            };
+            return new Promise(resolve => requestAnimationFrame(animate));
+        };
+
+        const fadeOutAudio = (audio, duration, callback = () => {}) => {
+            const initialVolume = audio.volume;
+            let startTime = null;
+            const animate = (currentTime) => {
+                if (!startTime) startTime = currentTime;
+                const progress = (currentTime - startTime) / duration;
+                audio.volume = initialVolume * (1 - progress);
+                if (progress < 1 && audio.volume > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    audio.volume = 0;
+                    audio.pause();
+                    callback();
+                }
+            };
+            requestAnimationFrame(animate);
+        };
         
         // その他
         const handleKeyDown = (e) => { if (e.target.tagName === 'INPUT') return; const keyMap = { Space: () => startPauseBtn.click(), KeyR: () => resetBtn.click(), KeyM: () => isMusicPlayerVisible && playPauseMusicBtn.click(), Comma: () => isMusicPlayerVisible && prevTrackBtn.click(), Period: () => isMusicPlayerVisible && nextTrackBtn.click() }; if (keyMap[e.code]) { e.preventDefault(); keyMap[e.code](); } };
